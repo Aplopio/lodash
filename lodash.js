@@ -863,7 +863,15 @@
          * @type Function
          */
         '_': lodash
-      }
+      },
+
+      /**
+       * Flag to toggle support filters in templates.
+       *
+       * @memberOf _.templateSettings
+       * @type boolean
+       */
+      'enable_filters': false
     };
 
     /*--------------------------------------------------------------------------*/
@@ -6407,6 +6415,26 @@
         (options.evaluate || reNoMatch).source + '|$'
       , 'g');
 
+      var applyFilters = function(str, escape) {
+        var reFilter = /(.)?(\|\s*)(\w+)/g,
+            prefix = str.replace(/\|\w+|^\s+|\s+$/g, '');
+
+        if(reFilter.test(str)) {
+          str = str.replace(
+            prefix, '_.chain(' + prefix + ')' + (escape ? '.escape()' : '')
+          );
+          debugger;
+          str = str.replace(reFilter, function(all_match, preceding, delimitter, filter_name) {
+            if(preceding && preceding[preceding.length - 1] === '|') return all_match;
+            if (isFunction(lodash[filter_name]))
+              return ( preceding || '') + '.' + filter_name + '()';
+            throw 'Invalid filter:' + filter_name + ' in template';
+          });
+          str += '.value()';
+        }
+        return str;
+      };
+
       text.replace(reDelimiters, function(match, escapeValue, interpolateValue, esTemplateValue, evaluateValue, offset) {
         interpolateValue || (interpolateValue = esTemplateValue);
 
@@ -6415,6 +6443,7 @@
 
         // replace delimiters with snippets
         if (escapeValue) {
+          if (options.enable_filters) escapeValue = applyFilters(escapeValue, true);
           source += "' +\n__e(" + escapeValue + ") +\n'";
         }
         if (evaluateValue) {
@@ -6422,6 +6451,7 @@
           source += "';\n" + evaluateValue + ";\n__p += '";
         }
         if (interpolateValue) {
+          if (options.enable_filters) interpolateValue = applyFilters(interpolateValue);
           source += "' +\n((__t = (" + interpolateValue + ")) == null ? '' : __t) +\n'";
         }
         index = offset + match.length;
