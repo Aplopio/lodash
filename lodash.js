@@ -6423,7 +6423,6 @@
           str = str.replace(
             prefix, '_.chain(' + prefix + ')' + (escape ? '.escape()' : '')
           );
-          debugger;
           str = str.replace(reFilter, function(all_match, preceding, delimitter, filter_name) {
             if(preceding && preceding[preceding.length - 1] === '|') return all_match;
             if (isFunction(lodash[filter_name]))
@@ -6444,7 +6443,8 @@
         // replace delimiters with snippets
         if (escapeValue) {
           if (options.enable_filters) escapeValue = applyFilters(escapeValue, true);
-          source += "' +\n__e(" + escapeValue + ") +\n'";
+          else escapeValue = "__e(" + escapeValue + ")";
+          source += "' +\n" + escapeValue + " +\n'";
         }
         if (evaluateValue) {
           isEvaluating = true;
