@@ -6430,6 +6430,8 @@
             throw 'Invalid filter:' + filter_name + ' in template';
           });
           str += '.value()';
+        } else if (escape) {
+          str = "__e(" + str + ")";
         }
         return str;
       };
